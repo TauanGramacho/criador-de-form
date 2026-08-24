@@ -263,3 +263,30 @@ Variaveis obrigatorias no Render:
 - `FRONTEND_BASE_URL`: `https://criador-de-form.onrender.com`.
 - `FRONTEND_ORIGIN`: `https://criador-de-form.onrender.com`.
 - `COOKIE_SECURE`: `true`.
+
+### Fly.io
+
+O arquivo `fly.toml` publica a mesma imagem Docker no Fly.io em `https://criador-de-form.fly.dev`.
+
+Secrets obrigatorios:
+
+```bash
+fly secrets set DATABASE_URL="postgresql://postgres:SUA-SENHA@db.gptvpmdacbhgnyisvzsl.supabase.co:5432/postgres?sslmode=require"
+fly secrets set GOOGLE_CLIENT_ID="216907542296-fe6kfssbm0ntfirprir74dr35771c7vr.apps.googleusercontent.com"
+fly secrets set GOOGLE_CLIENT_SECRET="SEU-SECRET-DO-GOOGLE"
+```
+
+Depois:
+
+```bash
+fly deploy --remote-only
+```
+
+No Google Cloud, configure:
+
+```text
+https://criador-de-form.fly.dev
+https://criador-de-form.fly.dev/api/auth/google/callback
+https://criador-de-form.fly.dev/privacy
+https://criador-de-form.fly.dev/terms
+```
