@@ -613,19 +613,6 @@ function FormBuilder({ form, onSaved }: { form: FormDetail; onSaved: () => Promi
     setFields((current) => current.map((field) => (field.id === fieldID ? { ...field, ...next } : field)));
   };
 
-  const updateFieldID = (fieldID: string, nextID: string) => {
-    setFields((current) =>
-      current.map((field, index) =>
-        field.id === fieldID
-          ? {
-              ...field,
-              id: uniqueFieldID(normalizeFieldID(nextID) || `campo_${index + 1}`, current, fieldID),
-            }
-          : field,
-      ),
-    );
-  };
-
   const updateFieldLabel = (fieldID: string, label: string) => {
     setFields((current) =>
       current.map((field, index) => {
@@ -742,14 +729,6 @@ function FormBuilder({ form, onSaved }: { form: FormDetail; onSaved: () => Promi
                   fullWidth
                 />
               ) : null}
-              <Box component="details" className="advanced-fields">
-                <Typography component="summary" variant="body2" fontWeight={600}>
-                  Avançado
-                </Typography>
-                <Box className="field-grid" sx={{ mt: 2 }}>
-                  <TextField label="Nome interno" value={field.id} onChange={(event) => updateFieldID(field.id, event.target.value)} />
-                </Box>
-              </Box>
             </Stack>
           </Paper>
         ))}
@@ -1183,11 +1162,11 @@ function questionSummary(field: FormField, responses: FormResponse[]) {
 }
 
 function responsePreview(fields: FormField[], response: FormResponse) {
-  const firstAnswered = responseRows(fields, response.answers).find((row) => !isEmptyAnswer(row.value));
-  if (!firstAnswered) {
+  const answeredRows = responseRows(fields, response.answers).filter((row) => !isEmptyAnswer(row.value)).slice(0, 2);
+  if (answeredRows.length === 0) {
     return 'Sem respostas preenchidas';
   }
-  return `${firstAnswered.label}: ${formatAnswer(firstAnswered.value)}`;
+  return answeredRows.map((row) => `${row.label}: ${formatAnswer(row.value)}`).join(' | ');
 }
 
 function isEmptyAnswer(value: unknown) {
