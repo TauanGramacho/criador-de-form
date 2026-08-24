@@ -1,0 +1,9 @@
+address: localhost:8080
+database_url: file:./data/formbuilder.db?_pragma=foreign_keys(1)
+frontend_origin: http://localhost:5173
+frontend_base_url: http://localhost:5173
+frontend_dist: ../frontend/dist
+cookie_secure: false
+google_client_id: ""
+google_client_secret: ""
+google_redirect_url: http://localhost:8080/api/auth/google/callback

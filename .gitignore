@@ -1,0 +1,11 @@
+backend/data/
+backend/server.exe
+frontend/dist/
+frontend/node_modules/
+node_modules/
+work/
+.env
+client_secret*.json
+backend/client_secret*.json
+backend/config.local.yaml
+.DS_Store

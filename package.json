@@ -1,0 +1,12 @@
+{
+  "name": "form-builder-challenge",
+  "private": true,
+  "scripts": {
+    "backend:run": "cd backend && go run ./cmd/server run",
+    "backend:migrate": "cd backend && go run ./cmd/server migrate",
+    "openapi": "cd backend && go run ./cmd/server openapi > ../api/openapi.json",
+    "client:generate": "npm --prefix frontend run generate:client",
+    "frontend:dev": "npm --prefix frontend run dev",
+    "frontend:build": "npm --prefix frontend run build"
+  }
+}

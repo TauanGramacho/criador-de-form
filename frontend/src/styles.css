@@ -1,0 +1,97 @@
+:root {
+  color: #0f172a;
+  background: #f6f7fb;
+}
+
+body {
+  margin: 0;
+}
+
+.auth-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    linear-gradient(140deg, rgba(37, 99, 235, 0.12), transparent 42%),
+    linear-gradient(320deg, rgba(22, 138, 74, 0.1), transparent 38%),
+    #f6f7fb;
+}
+
+.auth-panel,
+.public-panel {
+  width: 100%;
+  padding: 32px;
+  border-radius: 8px;
+}
+
+.auth-panel {
+  max-width: 440px;
+}
+
+.toolbar-panel,
+.editor-panel,
+.field-panel,
+.response-panel,
+.empty-state,
+.summary-card {
+  border-radius: 8px;
+  padding: 24px;
+}
+
+.summary-card {
+  color: inherit;
+  display: block;
+  min-height: 190px;
+  text-decoration: none;
+  transition:
+    border-color 160ms ease,
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.summary-card:hover {
+  border-color: rgba(37, 99, 235, 0.45);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+  transform: translateY(-2px);
+}
+
+.form-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.field-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+
+.line-clamp {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.empty-state {
+  min-height: 220px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .auth-panel,
+  .public-panel,
+  .toolbar-panel,
+  .editor-panel,
+  .field-panel,
+  .response-panel,
+  .empty-state,
+  .summary-card {
+    padding: 18px;
+  }
+}
+
