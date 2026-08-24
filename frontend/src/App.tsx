@@ -81,14 +81,12 @@ const defaultFields: FormField[] = [
   {
     id: 'name',
     label: 'Nome',
-    placeholder: 'Seu nome',
     required: true,
     type: 'text',
   },
   {
     id: 'email',
     label: 'E-mail',
-    placeholder: 'voce@empresa.com',
     required: true,
     type: 'email',
   },
@@ -708,11 +706,6 @@ function FormBuilder({ form, onSaved }: { form: FormDetail; onSaved: () => Promi
               </Box>
               <Box className="field-grid">
                 <TextField
-                  label="Placeholder"
-                  value={field.placeholder ?? ''}
-                  onChange={(event) => updateField(field.id, { placeholder: event.target.value || undefined })}
-                />
-                <TextField
                   label="Texto de ajuda"
                   value={field.helpText ?? ''}
                   onChange={(event) => updateField(field.id, { helpText: event.target.value || undefined })}
@@ -1057,6 +1050,7 @@ function PublicField({ field, value, onChange }: { field: FormField; value: unkn
     required: field.required,
     helperText: field.helpText,
     fullWidth: true,
+    autoComplete: 'off',
   };
   if (field.type === 'textarea') {
     return <TextField {...commonProps} value={String(value ?? '')} onChange={(event) => onChange(event.target.value)} multiline minRows={3} />;
@@ -1092,7 +1086,7 @@ function PublicField({ field, value, onChange }: { field: FormField; value: unkn
   if (field.type === 'checkbox') {
     return <FormControlLabel control={<Checkbox checked={Boolean(value)} onChange={(event) => onChange(event.target.checked)} />} label={field.label} />;
   }
-  return <TextField {...commonProps} value={String(value ?? '')} onChange={(event) => onChange(event.target.value)} placeholder={field.placeholder} />;
+  return <TextField {...commonProps} value={String(value ?? '')} onChange={(event) => onChange(event.target.value)} />;
 }
 
 function useCurrentUser() {
