@@ -409,7 +409,7 @@ function FormEditorPage() {
           }}
         />
       ) : (
-        <ResponsesTable responses={responsesQuery.data ?? []} loading={responsesQuery.isLoading} />
+        <ResponsesTable fields={formQuery.data.fields ?? []} responses={responsesQuery.data ?? []} loading={responsesQuery.isLoading} />
       )}
     </Stack>
   );
@@ -667,7 +667,7 @@ function FormBuilder({ form, onSaved }: { form: FormDetail; onSaved: () => Promi
   );
 }
 
-function ResponsesTable({ responses, loading }: { responses: FormResponse[]; loading: boolean }) {
+function ResponsesTable({ fields, responses, loading }: { fields: FormField[]; responses: FormResponse[]; loading: boolean }) {
   if (loading) {
     return <CenteredLoader />;
   }
@@ -686,10 +686,10 @@ function ResponsesTable({ responses, loading }: { responses: FormResponse[]; loa
             <Typography variant="body2" color="text.secondary">
               {new Date(response.submittedAt).toLocaleString()}
             </Typography>
-            {Object.entries(response.answers).map(([key, value]) => (
+            {responseRows(fields, response.answers).map(({ key, label, value }) => (
               <Stack key={key} direction={{ xs: 'column', sm: 'row' }} spacing={1}>
                 <Typography variant="body2" fontWeight={700} sx={{ minWidth: 160 }}>
-                  {key}
+                  {label}
                 </Typography>
                 <Typography variant="body2">{formatAnswer(value)}</Typography>
               </Stack>
@@ -923,6 +923,20 @@ function uniqueFieldID(baseID: string, fields: FormField[], currentID?: string) 
 
 function shouldSyncFieldID(field: FormField) {
   return field.id === '' || /^[0-9]+$/.test(field.id) || /^campo(_\d+)?$/.test(field.id) || field.id === fieldIDFromLabel(field.label);
+}
+
+function responseRows(fields: FormField[], answers: Answers) {
+  const fieldIDs = new Set(fields.map((field) => field.id));
+  const orderedRows = fields.map((field) => ({
+    key: field.id,
+    label: field.label || field.id,
+    value: answers[field.id],
+  }));
+  const extraRows = Object.entries(answers)
+    .filter(([key]) => !fieldIDs.has(key))
+    .map(([key, value]) => ({ key, label: key, value }));
+
+  return [...orderedRows, ...extraRows];
 }
 
 function formatAnswer(value: unknown) {
