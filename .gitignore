@@ -4,6 +4,7 @@ frontend/dist/
 frontend/node_modules/
 node_modules/
 work/
+tmp/
 .env
 client_secret*.json
 backend/client_secret*.json

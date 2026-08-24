@@ -8,6 +8,12 @@ Aplicacao em producao:
 https://criador-de-form.fly.dev
 ```
 
+Repositorio:
+
+```text
+https://github.com/TauanGramacho/criador-de-form
+```
+
 ## Stack
 
 - Backend: Go, Huma, SQLite local, Postgres/Supabase em producao, cookie sessions, Google OAuth2, bcrypt.
@@ -223,6 +229,14 @@ Os arquivos gerados ficam em `frontend/src/api/generated` e nao devem ser editad
 6. Abra o link publico `/f/:slug`.
 7. Envie uma resposta.
 8. Veja as respostas na area administrativa.
+
+## Escopo De Usuarios
+
+Cada usuário autenticado administra apenas os próprios formulários.
+Todo usuario autenticado pode acessar a area administrativa para criar e gerenciar formularios.
+Esse acesso nao e global: cada usuario ve apenas os formularios que criou. As rotas administrativas filtram formularios e respostas pelo `owner_id` do usuario autenticado.
+
+Links publicos publicados em `/f/:slug` nao exigem login e permitem apenas preencher o formulario. As respostas recebidas ficam disponiveis somente para o dono do formulario.
 
 ## Decisoes De Arquitetura
 
