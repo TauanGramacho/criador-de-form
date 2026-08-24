@@ -490,20 +490,52 @@ function FormBuilder({ form, onSaved }: { form: FormDetail; onSaved: () => Promi
   });
 
   const addField = (type: FieldType = 'text') => {
-    setFields((current) => [
-      ...current,
-      {
-        id: `field_${Math.random().toString(36).slice(2, 8)}`,
-        label: 'Novo campo',
-        required: false,
-        type,
-        options: type === 'select' ? ['Opção 1', 'Opção 2'] : undefined,
-      },
-    ]);
+    setFields((current) => {
+      const nextIndex = current.length + 1;
+      return [
+        ...current,
+        {
+          id: uniqueFieldID(`campo_${nextIndex}`, current),
+          label: '',
+          required: false,
+          type,
+          options: type === 'select' ? ['Opção 1', 'Opção 2'] : undefined,
+        },
+      ];
+    });
   };
 
   const updateField = (fieldID: string, next: Partial<FormField>) => {
     setFields((current) => current.map((field) => (field.id === fieldID ? { ...field, ...next } : field)));
+  };
+
+  const updateFieldID = (fieldID: string, nextID: string) => {
+    setFields((current) =>
+      current.map((field, index) =>
+        field.id === fieldID
+          ? {
+              ...field,
+              id: uniqueFieldID(normalizeFieldID(nextID) || `campo_${index + 1}`, current, fieldID),
+            }
+          : field,
+      ),
+    );
+  };
+
+  const updateFieldLabel = (fieldID: string, label: string) => {
+    setFields((current) =>
+      current.map((field, index) => {
+        if (field.id !== fieldID) {
+          return field;
+        }
+
+        const nextField = { ...field, label };
+        if (shouldSyncFieldID(field)) {
+          nextField.id = uniqueFieldID(fieldIDFromLabel(label) || `campo_${index + 1}`, current, fieldID);
+        }
+        return nextField;
+      }),
+    );
   };
 
   const removeField = (fieldID: string) => {
@@ -533,7 +565,7 @@ function FormBuilder({ form, onSaved }: { form: FormDetail; onSaved: () => Promi
             <Stack spacing={2}>
               <Stack direction="row" spacing={1} alignItems="center">
                 <Typography variant="subtitle2" color="text.secondary" sx={{ flex: 1 }}>
-                  Campo {index + 1}
+                  {field.label.trim() || `Campo ${index + 1}`}
                 </Typography>
                 <Tooltip title="Remover campo">
                   <IconButton aria-label="Remover campo" onClick={() => removeField(field.id)} disabled={fields.length <= 1}>
@@ -542,8 +574,7 @@ function FormBuilder({ form, onSaved }: { form: FormDetail; onSaved: () => Promi
                 </Tooltip>
               </Stack>
               <Box className="field-grid">
-                <TextField label="ID" value={field.id} onChange={(event) => updateField(field.id, { id: normalizeFieldID(event.target.value) })} />
-                <TextField label="Rótulo" value={field.label} onChange={(event) => updateField(field.id, { label: event.target.value })} />
+                <TextField label="Rótulo" value={field.label} onChange={(event) => updateFieldLabel(field.id, event.target.value)} required />
                 <FormControl>
                   <InputLabel>Tipo</InputLabel>
                   <Select
@@ -576,7 +607,7 @@ function FormBuilder({ form, onSaved }: { form: FormDetail; onSaved: () => Promi
                   onChange={(event) => updateField(field.id, { placeholder: event.target.value || undefined })}
                 />
                 <TextField
-                  label="Ajuda"
+                  label="Texto de ajuda"
                   value={field.helpText ?? ''}
                   onChange={(event) => updateField(field.id, { helpText: event.target.value || undefined })}
                 />
@@ -612,6 +643,14 @@ function FormBuilder({ form, onSaved }: { form: FormDetail; onSaved: () => Promi
                   fullWidth
                 />
               ) : null}
+              <Box component="details" className="advanced-fields">
+                <Typography component="summary" variant="body2" fontWeight={600}>
+                  Avançado
+                </Typography>
+                <Box className="field-grid" sx={{ mt: 2 }}>
+                  <TextField label="Nome interno" value={field.id} onChange={(event) => updateFieldID(field.id, event.target.value)} />
+                </Box>
+              </Box>
             </Stack>
           </Paper>
         ))}
@@ -856,9 +895,34 @@ function CenteredLoader() {
 
 function normalizeFieldID(value: string) {
   return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\be[\s_-]*mail\b/gi, 'email')
     .toLowerCase()
     .replace(/[^a-z0-9_]+/g, '_')
     .replace(/^_+|_+$/g, '');
+}
+
+function fieldIDFromLabel(label: string) {
+  return normalizeFieldID(label);
+}
+
+function uniqueFieldID(baseID: string, fields: FormField[], currentID?: string) {
+  const base = normalizeFieldID(baseID) || 'campo';
+  const usedIDs = new Set(fields.filter((field) => field.id !== currentID).map((field) => field.id));
+  let nextID = base;
+  let suffix = 2;
+
+  while (usedIDs.has(nextID)) {
+    nextID = `${base}_${suffix}`;
+    suffix += 1;
+  }
+
+  return nextID;
+}
+
+function shouldSyncFieldID(field: FormField) {
+  return field.id === '' || /^[0-9]+$/.test(field.id) || /^campo(_\d+)?$/.test(field.id) || field.id === fieldIDFromLabel(field.label);
 }
 
 function formatAnswer(value: unknown) {

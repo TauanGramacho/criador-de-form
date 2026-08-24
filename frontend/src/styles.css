@@ -68,6 +68,33 @@ body {
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
 }
 
+.advanced-fields {
+  border-top: 1px solid rgba(15, 23, 42, 0.1);
+  padding-top: 10px;
+}
+
+.advanced-fields > summary {
+  align-items: center;
+  color: #475569;
+  cursor: pointer;
+  display: inline-flex;
+  gap: 8px;
+  list-style: none;
+}
+
+.advanced-fields > summary::-webkit-details-marker {
+  display: none;
+}
+
+.advanced-fields > summary::before {
+  content: '+';
+  font-weight: 700;
+}
+
+.advanced-fields[open] > summary::before {
+  content: '-';
+}
+
 .line-clamp {
   display: -webkit-box;
   overflow: hidden;
@@ -94,4 +121,3 @@ body {
     padding: 18px;
   }
 }
-
