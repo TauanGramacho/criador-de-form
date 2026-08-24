@@ -2,6 +2,12 @@
 
 Aplicacao full stack para criacao e publicacao de formularios, criada para o desafio tecnico Full Stack Developer 2026.
 
+Aplicacao em producao:
+
+```text
+https://criador-de-form.fly.dev
+```
+
 ## Stack
 
 - Backend: Go, Huma, SQLite local, Postgres/Supabase em producao, cookie sessions, Google OAuth2, bcrypt.
@@ -126,26 +132,26 @@ cd backend
 
 Se essas variaveis nao estiverem configuradas, o frontend desabilita o botao de login com Google e mostra um aviso.
 
-Para producao na URL Render sugerida, configure no Google Cloud:
+Para producao no Fly.io, configure no Google Cloud:
 
 Origens JavaScript autorizadas:
 
 ```text
-https://criador-de-form.onrender.com
+https://criador-de-form.fly.dev
 ```
 
 URIs de redirecionamento autorizados:
 
 ```text
-https://criador-de-form.onrender.com/api/auth/google/callback
+https://criador-de-form.fly.dev/api/auth/google/callback
 ```
 
 Links de consentimento:
 
 ```text
-https://criador-de-form.onrender.com
-https://criador-de-form.onrender.com/privacy
-https://criador-de-form.onrender.com/terms
+https://criador-de-form.fly.dev
+https://criador-de-form.fly.dev/privacy
+https://criador-de-form.fly.dev/terms
 ```
 
 ## Banco E Migrations
@@ -225,6 +231,7 @@ Os arquivos gerados ficam em `frontend/src/api/generated` e nao devem ser editad
 - Sessoes usam cookie `HttpOnly` e tokens persistidos por hash no banco.
 - A definicao dos campos e as respostas ficam como JSON no SQLite. Isso simplifica o modelo para um form builder dinamico e mantem validacao no backend.
 - O frontend usa TanStack Query para estado remoto e o SDK TypeScript gerado para todas as chamadas de API comuns.
+- Todo usuario autenticado acessa a area administrativa. O isolamento acontece por propriedade: formularios e respostas administrativas sao filtrados pelo `owner_id` do usuario autenticado.
 
 ## Limitacoes E Trade-offs
 
@@ -252,21 +259,11 @@ npm audit --omit=dev
 
 ## Deploy
 
-O arquivo `render.yaml` publica a aplicacao como um unico servico Docker no Render. O Dockerfile compila o frontend, compila o backend Go e o backend serve tanto a API quanto a SPA React.
+O deploy principal usa Fly.io. O arquivo `fly.toml` publica a imagem Docker em `https://criador-de-form.fly.dev`.
 
-Variaveis obrigatorias no Render:
-
-- `DATABASE_URL`: connection string do Supabase Postgres com senha real e `sslmode=require`.
-- `GOOGLE_CLIENT_ID`: client ID OAuth do Google.
-- `GOOGLE_CLIENT_SECRET`: client secret OAuth do Google.
-- `GOOGLE_REDIRECT_URL`: `https://criador-de-form.onrender.com/api/auth/google/callback`.
-- `FRONTEND_BASE_URL`: `https://criador-de-form.onrender.com`.
-- `FRONTEND_ORIGIN`: `https://criador-de-form.onrender.com`.
-- `COOKIE_SECURE`: `true`.
+O Dockerfile compila o frontend, compila o backend Go e o backend serve tanto a API quanto a SPA React.
 
 ### Fly.io
-
-O arquivo `fly.toml` publica a mesma imagem Docker no Fly.io em `https://criador-de-form.fly.dev`.
 
 Secrets obrigatorios:
 
@@ -296,3 +293,17 @@ https://criador-de-form.fly.dev/api/auth/google/callback
 https://criador-de-form.fly.dev/privacy
 https://criador-de-form.fly.dev/terms
 ```
+
+### Render alternativo
+
+O arquivo `render.yaml` tambem permite publicar a aplicacao como um unico servico Docker no Render.
+
+Variaveis obrigatorias no Render:
+
+- `DATABASE_URL`: connection string do Supabase Postgres com senha real e `sslmode=require`.
+- `GOOGLE_CLIENT_ID`: client ID OAuth do Google.
+- `GOOGLE_CLIENT_SECRET`: client secret OAuth do Google.
+- `GOOGLE_REDIRECT_URL`: `https://criador-de-form.onrender.com/api/auth/google/callback`.
+- `FRONTEND_BASE_URL`: `https://criador-de-form.onrender.com`.
+- `FRONTEND_ORIGIN`: `https://criador-de-form.onrender.com`.
+- `COOKIE_SECURE`: `true`.
