@@ -515,7 +515,7 @@ function FormEditorPage() {
           }}
         />
       ) : (
-        <ResponsesTable fields={formQuery.data.fields ?? []} responses={responsesQuery.data ?? []} loading={responsesQuery.isLoading} />
+        <ResponsesTable form={formQuery.data} responses={responsesQuery.data ?? []} loading={responsesQuery.isLoading} />
       )}
     </Stack>
   );
@@ -773,37 +773,149 @@ function FormBuilder({ form, onSaved }: { form: FormDetail; onSaved: () => Promi
   );
 }
 
-function ResponsesTable({ fields, responses, loading }: { fields: FormField[]; responses: FormResponse[]; loading: boolean }) {
+function ResponsesTable({ form, responses, loading }: { form: FormDetail; responses: FormResponse[]; loading: boolean }) {
+  const fields = form.fields ?? [];
+  const summaries = useMemo(() => fields.map((field) => questionSummary(field, responses)), [fields, responses]);
+  const latestResponses = responses.slice(0, 5);
+
   if (loading) {
     return <CenteredLoader />;
   }
-  if (responses.length === 0) {
-    return (
-      <Paper elevation={0} className="empty-state">
-        <Typography variant="h6">Nenhuma resposta recebida</Typography>
-      </Paper>
-    );
-  }
+
   return (
-    <Stack spacing={2}>
-      {responses.map((response) => (
-        <Paper key={response.id} elevation={0} className="response-panel">
-          <Stack spacing={1}>
-            <Typography variant="body2" color="text.secondary">
-              {new Date(response.submittedAt).toLocaleString()}
-            </Typography>
-            {responseRows(fields, response.answers).map(({ key, label, value }) => (
-              <Stack key={key} direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-                <Typography variant="body2" fontWeight={700} sx={{ minWidth: 160 }}>
-                  {label}
-                </Typography>
-                <Typography variant="body2">{formatAnswer(value)}</Typography>
+    <Stack spacing={3}>
+      <Paper elevation={0} className="responses-overview">
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3}>
+          <ResponseMetric label="Respostas" value={responses.length} />
+          <ResponseMetric label="Status" value={form.status === 'published' ? 'Aberto' : 'Fechado'} />
+          <ResponseMetric label="Perguntas" value={fields.length} />
+        </Stack>
+      </Paper>
+      {responses.length === 0 ? (
+        <Paper elevation={0} className="empty-state">
+          <Typography variant="h6">Nenhuma resposta recebida</Typography>
+        </Paper>
+      ) : (
+        <>
+          <Box className="responses-insights-grid">
+            <Stack spacing={2}>
+              {summaries.map((summary) => (
+                <QuestionResultCard key={summary.field.id} summary={summary} />
+              ))}
+            </Stack>
+            <Paper elevation={0} className="latest-responses-panel">
+              <Typography variant="h6">Respostas recentes</Typography>
+              <Stack spacing={2} sx={{ mt: 2 }}>
+                {latestResponses.map((response, index) => {
+                  const preview = responsePreview(fields, response);
+                  return (
+                    <Box key={response.id} className="latest-response-row">
+                      <Typography variant="body2" fontWeight={700}>
+                        Resposta {responses.length - index}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {new Date(response.submittedAt).toLocaleString()}
+                      </Typography>
+                      <Typography variant="body2">{preview}</Typography>
+                    </Box>
+                  );
+                })}
               </Stack>
+            </Paper>
+          </Box>
+          <Stack spacing={2}>
+            <Typography variant="h6">Respostas individuais</Typography>
+            {responses.map((response) => (
+              <Paper key={response.id} elevation={0} className="response-panel">
+                <Stack spacing={1}>
+                  <Typography variant="body2" color="text.secondary">
+                    {new Date(response.submittedAt).toLocaleString()}
+                  </Typography>
+                  {responseRows(fields, response.answers).map(({ key, label, value }) => (
+                    <Stack key={key} direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+                      <Typography variant="body2" fontWeight={700} sx={{ minWidth: 160 }}>
+                        {label}
+                      </Typography>
+                      <Typography variant="body2">{formatAnswer(value)}</Typography>
+                    </Stack>
+                  ))}
+                </Stack>
+              </Paper>
             ))}
           </Stack>
-        </Paper>
-      ))}
+        </>
+      )}
     </Stack>
+  );
+}
+
+function ResponseMetric({ label, value }: { label: string; value: number | string }) {
+  return (
+    <Box className="response-metric">
+      <Typography variant="h4" fontWeight={800}>
+        {value}
+      </Typography>
+      <Typography variant="body2" color="text.secondary">
+        {label}
+      </Typography>
+    </Box>
+  );
+}
+
+function QuestionResultCard({ summary }: { summary: ReturnType<typeof questionSummary> }) {
+  return (
+    <Paper elevation={0} className="question-result-card">
+      <Stack spacing={2}>
+        <Stack direction="row" spacing={2} alignItems="center">
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography variant="h6">{summary.field.label}</Typography>
+            <Typography variant="body2" color="text.secondary">
+              {summary.count} respostas
+            </Typography>
+          </Box>
+          <Chip size="small" label={fieldTypeLabel(summary.field.type)} />
+        </Stack>
+        {summary.optionRows.length > 0 ? (
+          <Stack spacing={1.25}>
+            {summary.optionRows.map((row) => (
+              <Box key={row.label}>
+                <Stack direction="row" spacing={2} alignItems="center">
+                  <Typography variant="body2" sx={{ flex: 1 }}>
+                    {row.label}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {row.count} ({row.percent}%)
+                  </Typography>
+                </Stack>
+                <Box className="question-bar-track">
+                  <Box className="question-bar-fill" sx={{ width: `${row.percent}%` }} />
+                </Box>
+              </Box>
+            ))}
+          </Stack>
+        ) : summary.numberStats ? (
+          <Box className="number-summary-grid">
+            <ResponseMetric label="Média" value={summary.numberStats.average} />
+            <ResponseMetric label="Menor" value={summary.numberStats.min} />
+            <ResponseMetric label="Maior" value={summary.numberStats.max} />
+          </Box>
+        ) : (
+          <Stack spacing={1}>
+            {summary.latestValues.length === 0 ? (
+              <Typography variant="body2" color="text.secondary">
+                Ainda sem respostas para esta pergunta.
+              </Typography>
+            ) : (
+              summary.latestValues.map((value, index) => (
+                <Typography key={`${value}-${index}`} variant="body2" className="text-answer-preview">
+                  {value}
+                </Typography>
+              ))
+            )}
+          </Stack>
+        )}
+      </Stack>
+    </Paper>
   );
 }
 
@@ -1043,6 +1155,71 @@ function responseRows(fields: FormField[], answers: Answers) {
     .map(([key, value]) => ({ key, label: key, value }));
 
   return [...orderedRows, ...extraRows];
+}
+
+function questionSummary(field: FormField, responses: FormResponse[]) {
+  const values = responses.map((response) => response.answers[field.id]).filter((value) => !isEmptyAnswer(value));
+  const count = values.length;
+  const optionLabels = field.type === 'checkbox' ? ['Sim', 'Não'] : field.type === 'select' ? field.options ?? [] : [];
+  const optionRows = optionLabels.map((label) => {
+    const rowCount = values.filter((value) => optionValueLabel(field, value) === label).length;
+    return {
+      count: rowCount,
+      label,
+      percent: count === 0 ? 0 : Math.round((rowCount / count) * 100),
+    };
+  });
+  const numbers = field.type === 'number' ? values.map(numberFromAnswer).filter((value): value is number => value !== undefined) : [];
+  const numberStats =
+    numbers.length > 0
+      ? {
+          average: Number((numbers.reduce((total, value) => total + value, 0) / numbers.length).toFixed(1)),
+          max: Math.max(...numbers),
+          min: Math.min(...numbers),
+        }
+      : undefined;
+
+  return {
+    count,
+    field,
+    latestValues: values.slice(0, 5).map(formatAnswer),
+    numberStats,
+    optionRows,
+  };
+}
+
+function responsePreview(fields: FormField[], response: FormResponse) {
+  const firstAnswered = responseRows(fields, response.answers).find((row) => !isEmptyAnswer(row.value));
+  if (!firstAnswered) {
+    return 'Sem respostas preenchidas';
+  }
+  return `${firstAnswered.label}: ${formatAnswer(firstAnswered.value)}`;
+}
+
+function isEmptyAnswer(value: unknown) {
+  return value === undefined || value === null || value === '';
+}
+
+function numberFromAnswer(value: unknown) {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
+}
+
+function optionValueLabel(field: FormField, value: unknown) {
+  if (field.type === 'checkbox') {
+    return Boolean(value) ? 'Sim' : 'Não';
+  }
+  return String(value);
+}
+
+function fieldTypeLabel(type: FieldType) {
+  return fieldTypes.find((fieldType) => fieldType.value === type)?.label ?? type;
 }
 
 function dashboardMetrics(forms: FormSummary[]) {
