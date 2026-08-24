@@ -64,7 +64,7 @@ func runServer(cfg app.Config) error {
 
 	errCh := make(chan error, 1)
 	go func() {
-		log.Printf("backend listening on http://%s", cfg.Address)
+		log.Println("backend listening")
 		errCh <- server.ListenAndServe()
 	}()
 

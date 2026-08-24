@@ -974,6 +974,45 @@
       }
     },
     "/api/forms/{id}": {
+      "delete": {
+        "operationId": "deleteForm",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "fb_session",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Delete a form",
+        "tags": [
+          "Forms"
+        ]
+      },
       "get": {
         "operationId": "getForm",
         "parameters": [

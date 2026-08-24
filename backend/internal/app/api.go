@@ -84,6 +84,8 @@ type FormDetailOutput struct {
 	Body FormDetail
 }
 
+type DeleteFormOutput struct{}
+
 type ListFormsOutput struct {
 	Body []FormSummary
 }
@@ -127,7 +129,11 @@ func NewHandler(cfg Config, store *Store) (http.Handler, huma.API) {
 
 	service := NewService(cfg, store)
 	service.RegisterRoutes(api)
-	return cors(cfg, frontendFallback(router, cfg.FrontendDist)), api
+	handler := frontendFallback(router, cfg.FrontendDist)
+	handler = requestSizeLimit(handler)
+	handler = cors(cfg, handler)
+	handler = securityHeaders(handler)
+	return handler, api
 }
 
 func (s *Service) RegisterRoutes(api huma.API) {
@@ -222,6 +228,15 @@ func (s *Service) RegisterRoutes(api huma.API) {
 		Summary:     "Update a form",
 		Tags:        []string{"Forms"},
 	}, s.updateForm)
+
+	huma.Register(api, huma.Operation{
+		OperationID:   "deleteForm",
+		Method:        http.MethodDelete,
+		Path:          "/api/forms/{id}",
+		Summary:       "Delete a form",
+		Tags:          []string{"Forms"},
+		DefaultStatus: http.StatusNoContent,
+	}, s.deleteForm)
 
 	huma.Register(api, huma.Operation{
 		OperationID: "publishForm",
@@ -434,6 +449,20 @@ func (s *Service) updateForm(ctx context.Context, input *struct {
 	return s.formDetailOutput(form)
 }
 
+func (s *Service) deleteForm(ctx context.Context, input *struct {
+	SessionInput
+	ID string `path:"id"`
+}) (*DeleteFormOutput, error) {
+	user, err := s.requireUser(input.Session)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.store.DeleteForm(user.ID, input.ID); err != nil {
+		return nil, mapStoreError(err)
+	}
+	return &DeleteFormOutput{}, nil
+}
+
 func (s *Service) publishForm(ctx context.Context, input *struct {
 	SessionInput
 	ID string `path:"id"`
@@ -578,7 +607,7 @@ func clearCookie(name string, secure bool) http.Cookie {
 func cors(cfg Config, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
-		if origin != "" && (origin == cfg.FrontendOrigin || cfg.FrontendOrigin == "*") {
+		if origin != "" && origin == cfg.FrontendOrigin {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 			w.Header().Set("Vary", "Origin")
 			w.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -589,6 +618,25 @@ func cors(cfg Config, next http.Handler) http.Handler {
 			w.WriteHeader(http.StatusNoContent)
 			return
 		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func requestSizeLimit(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Body != nil {
+			r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func securityHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
+		w.Header().Set("X-Frame-Options", "DENY")
+		w.Header().Set("Content-Security-Policy", "base-uri 'self'; object-src 'none'; frame-ancestors 'none'")
 		next.ServeHTTP(w, r)
 	})
 }

@@ -32,6 +32,7 @@ body {
 .toolbar-panel,
 .editor-panel,
 .field-panel,
+.metric-card,
 .response-panel,
 .empty-state,
 .summary-card {
@@ -56,10 +57,33 @@ body {
   transform: translateY(-2px);
 }
 
+.summary-card-action {
+  cursor: pointer;
+}
+
+.summary-card-action:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.32);
+  outline-offset: 2px;
+}
+
 .form-grid {
   display: grid;
   gap: 16px;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.metrics-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.metric-card {
+  min-height: 112px;
+}
+
+.metric-card-wide {
+  grid-column: span 2;
 }
 
 .field-grid {
@@ -115,9 +139,18 @@ body {
   .toolbar-panel,
   .editor-panel,
   .field-panel,
+  .metric-card,
   .response-panel,
   .empty-state,
   .summary-card {
     padding: 18px;
+  }
+
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .metric-card-wide {
+    grid-column: auto;
   }
 }

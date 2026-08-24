@@ -287,6 +287,24 @@ func (s *Store) SetFormStatus(ownerID, id string, status FormStatus) (Form, erro
 	return s.GetForm(ownerID, id)
 }
 
+func (s *Store) DeleteForm(ownerID, id string) error {
+	result, err := s.db.Exec(`
+		DELETE FROM forms
+		WHERE id = ? AND owner_id = ?
+	`, id, ownerID)
+	if err != nil {
+		return err
+	}
+	count, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if count == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
 func (s *Store) GetPublishedFormBySlug(slug string) (PublicForm, error) {
 	row := s.db.QueryRow(`
 		SELECT id, title, description, slug, fields_json

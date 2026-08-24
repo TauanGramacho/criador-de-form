@@ -47,6 +47,7 @@ import {
 import { apiBaseUrl, unwrap } from './api';
 import {
   createForm,
+  deleteForm,
   getCurrentUser,
   getAuthConfig,
   getForm,
@@ -309,11 +310,21 @@ function DashboardPage() {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (formID: string) => {
+      await deleteForm({ path: { id: formID } });
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['forms'] });
+    },
+  });
+
   if (formsQuery.isLoading) {
     return <CenteredLoader />;
   }
 
   const forms = formsQuery.data ?? [];
+  const metrics = dashboardMetrics(forms);
 
   return (
     <Stack spacing={3}>
@@ -329,6 +340,8 @@ function DashboardPage() {
         </Button>
       </Stack>
       {formsQuery.error ? <Alert severity="error">{formsQuery.error.message}</Alert> : null}
+      {deleteMutation.error ? <Alert severity="error">{deleteMutation.error.message}</Alert> : null}
+      <DashboardStats forms={forms} metrics={metrics} />
       {forms.length === 0 ? (
         <Paper elevation={0} className="empty-state">
           <Typography variant="h6">Nenhum formulário ainda</Typography>
@@ -339,7 +352,16 @@ function DashboardPage() {
       ) : (
         <Box className="form-grid">
           {forms.map((form) => (
-            <FormSummaryCard key={form.id} form={form} />
+            <FormSummaryCard
+              key={form.id}
+              form={form}
+              deleting={deleteMutation.isPending && deleteMutation.variables === form.id}
+              onDelete={() => {
+                if (window.confirm(`Excluir "${form.title}" e todas as respostas recebidas?`)) {
+                  deleteMutation.mutate(form.id);
+                }
+              }}
+            />
           ))}
         </Box>
       )}
@@ -347,15 +369,99 @@ function DashboardPage() {
   );
 }
 
-function FormSummaryCard({ form }: { form: FormSummary }) {
+function DashboardStats({ forms, metrics }: { forms: FormSummary[]; metrics: ReturnType<typeof dashboardMetrics> }) {
+  const topForms = [...forms].sort((a, b) => b.responseCount - a.responseCount).slice(0, 3);
+
   return (
-    <Paper elevation={0} className="summary-card" component={RouterLink} to={`/forms/${form.id}`}>
+    <Box className="metrics-grid">
+      <MetricCard label="Formulários" value={metrics.totalForms} helper={`${metrics.draftForms} rascunhos`} />
+      <MetricCard label="Publicados" value={metrics.publishedForms} helper={`${metrics.publishRate}% publicados`} />
+      <MetricCard label="Respostas" value={metrics.totalResponses} helper="Total recebido" />
+      <MetricCard label="Média" value={metrics.averageResponses} helper="Respostas por formulário" />
+      <Paper elevation={0} className="metric-card metric-card-wide">
+        <Typography variant="subtitle2" color="text.secondary">
+          Mais respondidos
+        </Typography>
+        <Stack spacing={1.25} sx={{ mt: 1.5 }}>
+          {topForms.length === 0 ? (
+            <Typography variant="body2" color="text.secondary">
+              Ainda sem dados
+            </Typography>
+          ) : (
+            topForms.map((form) => (
+              <Stack key={form.id} direction="row" spacing={2} alignItems="center">
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography variant="body2" fontWeight={700} noWrap>
+                    {form.title}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {form.status === 'published' ? 'Publicado' : 'Rascunho'}
+                  </Typography>
+                </Box>
+                <Chip size="small" label={`${form.responseCount} respostas`} />
+              </Stack>
+            ))
+          )}
+        </Stack>
+      </Paper>
+    </Box>
+  );
+}
+
+function MetricCard({ label, value, helper }: { label: string; value: number; helper: string }) {
+  return (
+    <Paper elevation={0} className="metric-card">
+      <Typography variant="body2" color="text.secondary">
+        {label}
+      </Typography>
+      <Typography variant="h4" fontWeight={800} sx={{ mt: 1 }}>
+        {value}
+      </Typography>
+      <Typography variant="caption" color="text.secondary">
+        {helper}
+      </Typography>
+    </Paper>
+  );
+}
+
+function FormSummaryCard({ form, deleting, onDelete }: { form: FormSummary; deleting: boolean; onDelete: () => void }) {
+  const navigate = useNavigate();
+
+  const openForm = () => navigate(`/forms/${form.id}`);
+
+  return (
+    <Paper
+      elevation={0}
+      className="summary-card summary-card-action"
+      role="button"
+      tabIndex={0}
+      onClick={openForm}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          openForm();
+        }
+      }}
+    >
       <Stack spacing={2}>
         <Stack direction="row" spacing={1} alignItems="center">
           <Chip size="small" color={form.status === 'published' ? 'success' : 'default'} label={form.status === 'published' ? 'Publicado' : 'Rascunho'} />
           <Typography variant="body2" color="text.secondary">
             {form.responseCount} respostas
           </Typography>
+          <Box sx={{ flex: 1 }} />
+          <Tooltip title="Excluir formulário">
+            <IconButton
+              aria-label="Excluir formulário"
+              disabled={deleting}
+              onClick={(event) => {
+                event.stopPropagation();
+                onDelete();
+              }}
+            >
+              <DeleteIcon />
+            </IconButton>
+          </Tooltip>
         </Stack>
         <Box>
           <Typography variant="h6">{form.title}</Typography>
@@ -937,6 +1043,24 @@ function responseRows(fields: FormField[], answers: Answers) {
     .map(([key, value]) => ({ key, label: key, value }));
 
   return [...orderedRows, ...extraRows];
+}
+
+function dashboardMetrics(forms: FormSummary[]) {
+  const totalForms = forms.length;
+  const publishedForms = forms.filter((form) => form.status === 'published').length;
+  const draftForms = totalForms - publishedForms;
+  const totalResponses = forms.reduce((total, form) => total + form.responseCount, 0);
+  const averageResponses = totalForms === 0 ? 0 : Number((totalResponses / totalForms).toFixed(1));
+  const publishRate = totalForms === 0 ? 0 : Math.round((publishedForms / totalForms) * 100);
+
+  return {
+    averageResponses,
+    draftForms,
+    publishedForms,
+    publishRate,
+    totalForms,
+    totalResponses,
+  };
 }
 
 function formatAnswer(value: unknown) {

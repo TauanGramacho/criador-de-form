@@ -3,6 +3,7 @@ package app
 import (
 	"database/sql"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
@@ -100,7 +101,7 @@ func ensureSQLiteDir(databaseURL string) error {
 	if dir == "." || dir == "" {
 		return nil
 	}
-	return os.MkdirAll(dir, 0o755)
+	return os.MkdirAll(dir, 0o700)
 }
 
 func RunMigrations(db *Database) error {
@@ -134,7 +135,7 @@ func RunMigrations(db *Database) error {
 			return err
 		}
 
-		sqlBytes, err := os.ReadFile(filepath.Join(migrationsPath, name))
+		sqlBytes, err := fs.ReadFile(os.DirFS(migrationsPath), name)
 		if err != nil {
 			return err
 		}
@@ -158,7 +159,7 @@ func RunMigrations(db *Database) error {
 }
 
 func findMigrationsPath() (string, error) {
-	candidates := []string{"migrations", "backend/migrations"}
+	candidates := []string{"migrations", "backend/migrations", "../../migrations"}
 	for _, candidate := range candidates {
 		if entries, err := os.ReadDir(candidate); err == nil && len(entries) > 0 {
 			return candidate, nil

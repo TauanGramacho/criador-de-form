@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite --host localhost",
     "build": "tsc -b && vite build",
-    "generate:client": "openapi-ts"
+    "generate:client": "openapi-ts && node ../scripts/strip-generated-comments.mjs"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

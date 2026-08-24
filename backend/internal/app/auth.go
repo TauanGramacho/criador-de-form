@@ -121,6 +121,9 @@ func (s *Service) exchangeGoogleCode(ctx context.Context, code string) (googleUs
 	if strings.TrimSpace(info.Email) == "" {
 		return googleUserInfo{}, huma.Error400BadRequest("Google account did not return an email")
 	}
+	if !info.VerifiedEmail {
+		return googleUserInfo{}, huma.Error400BadRequest("Google account email is not verified")
+	}
 	return info, nil
 }
 
