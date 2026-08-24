@@ -140,9 +140,15 @@ function Shell({ user }: { user: User }) {
     <>
       <AppBar position="sticky" color="inherit" elevation={0} sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
         <Toolbar sx={{ gap: 2 }}>
-          <Typography component={RouterLink} to="/forms" variant="h6" color="text.primary" sx={{ textDecoration: 'none', flex: 1 }}>
-            Form Builder
-          </Typography>
+          <Box
+            component={RouterLink}
+            to="/forms"
+            color="text.primary"
+            sx={{ alignItems: 'center', display: 'inline-flex', flex: 1, gap: 1, textDecoration: 'none' }}
+          >
+            <Box component="img" src="/favicon.svg" alt="" sx={{ height: 24, width: 24 }} />
+            <Typography variant="h6">Form Builder</Typography>
+          </Box>
           <Typography variant="body2" color="text.secondary">
             {user.name}
           </Typography>
