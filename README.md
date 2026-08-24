@@ -276,6 +276,12 @@ fly secrets set GOOGLE_CLIENT_ID="216907542296-fe6kfssbm0ntfirprir74dr35771c7vr.
 fly secrets set GOOGLE_CLIENT_SECRET="SEU-SECRET-DO-GOOGLE"
 ```
 
+No Windows, voce tambem pode setar o `DATABASE_URL` sem expor a senha no historico do terminal:
+
+```powershell
+.\scripts\set-fly-database-secret.ps1
+```
+
 Depois:
 
 ```bash
