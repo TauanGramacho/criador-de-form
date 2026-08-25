@@ -35,6 +35,40 @@ Em producao, use Supabase Postgres com uma `DATABASE_URL` no formato:
 postgresql://postgres:SUA-SENHA@db.gptvpmdacbhgnyisvzsl.supabase.co:5432/postgres?sslmode=require
 ```
 
+## Execucao Local Do Zero
+
+Depois de clonar o repositorio, a aplicacao pode ser executada localmente sem Supabase e sem servico externo de banco. O backend usa SQLite por padrao.
+
+```bash
+git clone https://github.com/TauanGramacho/criador-de-form.git
+cd criador-de-form
+```
+
+Terminal 1, backend:
+
+```bash
+cd backend
+go run ./cmd/server migrate
+go run ./cmd/server run
+```
+
+Terminal 2, frontend:
+
+```bash
+cd frontend
+npm install
+npm run generate:client
+npm run dev
+```
+
+Depois acesse:
+
+```text
+http://localhost:5173
+```
+
+O login com e-mail e senha funciona localmente sem configuracao extra. O login com Google tambem funciona localmente, mas somente depois de configurar credenciais OAuth do Google conforme a secao "Configurando Login Com Google".
+
 ## Backend
 
 ```bash
