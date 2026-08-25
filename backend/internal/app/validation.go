@@ -42,9 +42,6 @@ func validateFormFields(fields []FormField) error {
 		default:
 			return fmt.Errorf("field %q has unsupported type %q", field.ID, field.Type)
 		}
-		if field.Min != nil && field.Max != nil && *field.Min > *field.Max {
-			return fmt.Errorf("field %q has min greater than max", field.ID)
-		}
 	}
 	return nil
 }
@@ -89,15 +86,8 @@ func validateAnswer(field FormField, value any) error {
 			return fmt.Errorf("field %q must contain a valid email", field.ID)
 		}
 	case FieldTypeNumber:
-		number, ok := value.(float64)
-		if !ok {
+		if _, ok := value.(float64); !ok {
 			return fmt.Errorf("field %q must be a number", field.ID)
-		}
-		if field.Min != nil && number < *field.Min {
-			return fmt.Errorf("field %q must be greater than or equal to %v", field.ID, *field.Min)
-		}
-		if field.Max != nil && number > *field.Max {
-			return fmt.Errorf("field %q must be less than or equal to %v", field.ID, *field.Max)
 		}
 	case FieldTypeSelect:
 		text, ok := value.(string)

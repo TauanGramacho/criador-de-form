@@ -703,22 +703,6 @@ function FormBuilder({ form, onSaved }: { form: FormDetail; onSaved: () => Promi
                   value={field.helpText ?? ''}
                   onChange={(event) => updateField(field.id, { helpText: event.target.value || undefined })}
                 />
-                {field.type === 'number' ? (
-                  <>
-                    <TextField
-                      label="Mínimo"
-                      type="number"
-                      value={field.min ?? ''}
-                      onChange={(event) => updateField(field.id, { min: event.target.value === '' ? undefined : Number(event.target.value) })}
-                    />
-                    <TextField
-                      label="Máximo"
-                      type="number"
-                      value={field.max ?? ''}
-                      onChange={(event) => updateField(field.id, { max: event.target.value === '' ? undefined : Number(event.target.value) })}
-                    />
-                  </>
-                ) : null}
               </Box>
               {field.type === 'select' ? (
                 <TextField
@@ -1050,7 +1034,6 @@ function PublicField({ field, value, onChange }: { field: FormField; value: unkn
         value={value ?? ''}
         onChange={(event) => onChange(event.target.value === '' ? undefined : Number(event.target.value))}
         type="number"
-        inputProps={{ min: field.min, max: field.max }}
       />
     );
   }
