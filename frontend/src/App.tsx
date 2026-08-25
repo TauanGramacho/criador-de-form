@@ -620,19 +620,7 @@ function FormBuilder({ form, onSaved }: { form: FormDetail; onSaved: () => Promi
   };
 
   const updateFieldLabel = (fieldID: string, label: string) => {
-    setFields((current) =>
-      current.map((field, index) => {
-        if (field.id !== fieldID) {
-          return field;
-        }
-
-        const nextField = { ...field, label };
-        if (shouldSyncFieldID(field)) {
-          nextField.id = uniqueFieldID(fieldIDFromLabel(label) || `campo_${index + 1}`, current, fieldID);
-        }
-        return nextField;
-      }),
-    );
+    setFields((current) => current.map((field) => (field.id === fieldID ? { ...field, label } : field)));
   };
 
   const removeField = (fieldID: string) => {
@@ -1083,10 +1071,6 @@ function normalizeFieldID(value: string) {
     .replace(/^_+|_+$/g, '');
 }
 
-function fieldIDFromLabel(label: string) {
-  return normalizeFieldID(label);
-}
-
 function uniqueFieldID(baseID: string, fields: FormField[], currentID?: string) {
   const base = normalizeFieldID(baseID) || 'campo';
   const usedIDs = new Set(fields.filter((field) => field.id !== currentID).map((field) => field.id));
@@ -1099,10 +1083,6 @@ function uniqueFieldID(baseID: string, fields: FormField[], currentID?: string) 
   }
 
   return nextID;
-}
-
-function shouldSyncFieldID(field: FormField) {
-  return field.id === '' || /^[0-9]+$/.test(field.id) || /^campo(_\d+)?$/.test(field.id) || field.id === fieldIDFromLabel(field.label);
 }
 
 function responseRows(fields: FormField[], answers: Answers) {
